@@ -34,7 +34,6 @@ DF_LEN = {'en':39624,'fi':39624,'sv':39624,'no':39624,'de':39624}
 #*************************** BEGIN ****************************************
 st.write("""
 ## E-mail Sorting System
-###### Parameters
 """)
 
 st.sidebar.header('Parameter input')
@@ -52,12 +51,9 @@ def user_input_features1():
 user_input_features_df1 = user_input_features1()
 model_language = user_input_features_df1['model_language'].values[0]
 
-st.write(user_input_features_df1)
-
-
 
 #*************************** IMPORT GLOBALS AND FUNCTIONS ****************************************
-import my_functions as f
+import enron_sent_functions as f
 
 
 #*************************** Initialize variables ****************************************
@@ -80,27 +76,34 @@ model_architecture = user_input_features_df2['model_architecture'].values[0]
 optimizer = user_input_features_df2['optimizer'].values[0]
 graph_data = model_architecture + '_' + vector_type + '_' + str(30) + 'k_' + str(300) + 'd_' + optimizer + '_' + model_language
 
-st.write(user_input_features_df2)
-
 
 #*************************** user_input_features_df3 ****************************************
-graph_data_found = False
+# graph_data_found_pre
+graph_data_found_pre = False
 if graph_data in files:
-    graph_data_found = True
+    graph_data_found_pre = True
 
-
-user_input_features_df3 = f.user_input_features3(GLOBAL_PATH, model_language, graph_data, graph_data_found, DF_LEN)
+user_input_features_df3 = f.user_input_features3(GLOBAL_PATH, model_language, graph_data, graph_data_found_pre, DF_LEN)
 metric = user_input_features_df3['metric'].values[0]
 vector_dimension = user_input_features_df3['vector_dimension'].values[0]
 dataset_size = user_input_features_df3['dataset_size'].values[0]
 vocabulary_size = (int)(user_input_features_df3['vocabulary_size'].values[0] / 1000)
 graph_data = model_architecture + '_' + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + optimizer + '_' + model_language
 
-st.write(user_input_features_df3)
+graph_data_found = False
+if graph_data in files:
+    graph_data_found = True
+
+with st.expander("Parameters"):
+    st.write(user_input_features_df1)
+    st.write(user_input_features_df2)
+    st.write(user_input_features_df3)
+
+with st.expander("Available graph data for lang [" + model_language + "]"):
+    st.write(files)
 
 
 if graph_data_found:
-    st.write('Available graph data with lang = ', model_language, ':', files)
     st.write('Using graph data [' + graph_data + ']')
 
     #*************************** Load CSV and Spacy ****************************************
@@ -110,10 +113,13 @@ if graph_data_found:
 
     #*************************** Plot graph ****************************************
     f.plot_scores(GLOBAL_PATH, model_language, graph_data, [user_input_features_df1, user_input_features_df2, user_input_features_df3], metric)
-    f.print_results(pickle.load(open(GLOBAL_PATH + model_language + '/results/' + graph_data, 'rb')))
+    with st.expander("Result summary"):
+        f.print_results(pickle.load(open(GLOBAL_PATH + model_language + '/results/' + graph_data, 'rb')))
+
 
     #*************************** Print user value counts ****************************************
-    st.write('User value counts:',df.user.value_counts())
+    with st.expander("User value counts"):
+        st.write(df.user.value_counts().sort_index(ascending=True).to_frame().reset_index().rename(columns={'index':'assignment group','user':'count'}).sort_values(by='count',ascending=False))
     users = df.user.unique().tolist()
 
     with st.form("my_form_text"):
@@ -250,6 +256,7 @@ if graph_data_found:
         if submit_custom_seed:
             st.write('Actual user:')
             st.write(f'df[',custom_seed,'] = ',df.iloc[int(custom_seed)].user)
-            
+
+
 else:
     st.write('Graph data [' + graph_data + '] not found')
