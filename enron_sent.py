@@ -14,6 +14,7 @@ import pickle
 import re
 import spacy
 import streamlit as st
+st.set_page_config(page_icon='android-chrome-512x512.png')
 import tensorflow as tf
 
 from collections import defaultdict
