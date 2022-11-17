@@ -14,7 +14,7 @@ import pickle
 import re
 import spacy
 import streamlit as st
-st.set_page_config(page_icon='android-chrome-512x512.png')
+st.set_page_config(page_icon='favicon.png')
 import tensorflow as tf
 
 from collections import defaultdict
@@ -116,6 +116,8 @@ if graph_data_found:
     f.plot_scores(GLOBAL_PATH, model_language, graph_data, [user_input_features_df1, user_input_features_df2, user_input_features_df3], metric)
     with st.expander("Result summary"):
         f.print_results(pickle.load(open(GLOBAL_PATH + model_language + '/results/' + graph_data, 'rb')))
+    with st.expander("Language instance count"):
+        f.plot_languages(df,model_language)
 
 
     #*************************** Print user value counts ****************************************
