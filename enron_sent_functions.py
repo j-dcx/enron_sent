@@ -77,6 +77,33 @@ def user_input_features3(GLOBAL_PATH, model_language, graph_data, graph_data_fou
             'vocabulary_size': vocabulary_size}
     return pd.DataFrame(data, index=[0])
 
+def plot_languages(df,model_language):
+    plt.style.use('ggplot')
+    plt.rcParams.update({'font.size':15})
+
+    col1,col2 = st.columns(2)
+    with col1:
+        st.write("Language instance count >=")
+    with col2:
+        lang_count = st.number_input("",min_value=1,max_value=2000,value=50,label_visibility="collapsed")
+
+    df_lang = df[df.lang==model_language].lang.value_counts().loc[lambda x: x>=lang_count].to_frame()
+
+    fig = plt.figure(figsize =(10, 7))
+    plt.style.use('ggplot')
+    plt.rcParams.update({'font.size':15})
+    plt.pie(df_lang.lang, labels=df_lang.index ,autopct='%.2f%%', pctdistance=0.85)
+    #https://www.pythonprogramming.in/how-to-pie-chart-with-different-color-themes-in-matplotlib.html
+    plt.legend(loc = "best", labels = ['%s = %d' % (l,c) for l,c in zip(df_lang.index, df_lang.lang)]) 
+    # plt.show()
+    # st.pyplot(fig)
+
+    #https://github.com/streamlit/streamlit/issues/3527
+    from io import BytesIO
+    buf = BytesIO()
+    fig.savefig(buf, format="png")
+    st.image(buf, width=650)
+
 def plot_scores(GLOBAL_PATH, model_language, graph_data, user_input_features_df, metric):
     scores = pickle.load(open(GLOBAL_PATH + model_language + '/' + GRAPH_DATA_DIRECTORY + graph_data, 'rb'))
     model_language = user_input_features_df[0].model_language[0]

@@ -91,6 +91,10 @@ dataset_size = user_input_features_df3['dataset_size'].values[0]
 vocabulary_size = (int)(user_input_features_df3['vocabulary_size'].values[0] / 1000)
 graph_data = model_architecture + '_' + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + optimizer + '_' + model_language
 
+if model_type == 'nonsequential':
+    st.write('model_type = ', model_type)
+    graph_data = 'nonsequential'
+
 graph_data_found = False
 if graph_data in files:
     graph_data_found = True
@@ -161,9 +165,6 @@ if graph_data_found:
         submit_generate = st.form_submit_button("Submit length")
         if submit_generate:
         
-            import subprocess
-            import sys
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "transformers"])
             from transformers import Trainer, TrainingArguments, GPT2LMHeadModel
             model = GPT2LMHeadModel.from_pretrained("gpt2")
             model_generate = GPT2LMHeadModel.from_pretrained(GLOBAL_PATH + model_language + "/" + f.GENERATE_DIRECTORY)
