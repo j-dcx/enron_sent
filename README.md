@@ -1,4 +1,4 @@
-# www.emailsorter.me
+# https://www.emailsorter.me
 EMAIL SORTING SYSTEM
 
 Purpose of this system is to categorize text with multi-classification machine learning algorithms / natural language processing in Python language.
@@ -20,7 +20,7 @@ VECTORIZATION<br>
 &nbsp;-------- CBOW<br>
 &nbsp;---- Spacy<br>
 &nbsp;---- GloVe (not yet implemented)<br>
-&nbsp;-------- glove.6B.300d<br>
+&nbsp;-------- glove.6B.300d (https://nlp.stanford.edu/projects/glove/)<br>
 &nbsp;-------- trained on data<br>
 &nbsp;---- sklearn HashingVectorizer  + TfidfTransformer<br>
 &nbsp;---- tensorflow.keras Tokenizer (technically not a vector, however was only format working somewhat ok with LSTM)<br>
