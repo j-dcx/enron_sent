@@ -1,7 +1,7 @@
 ### https://www.emailsorter.me
-##EMAIL SORTING SYSTEM
+## EMAIL SORTING SYSTEM
 
-Purpose of this system is to categorize text with multi-classification machine learning algorithms / natural language processing in Python language.
+The purpose of this system is to categorize text with multi-classification machine learning algorithms / natural language processing in Python language.
 
 - DATA<br>
 &nbsp;- Dataset = https://www.cs.cmu.edu/~enron/<br>
