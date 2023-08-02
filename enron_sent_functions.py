@@ -42,7 +42,7 @@ def user_input_features2(spacy_package):
                     'Spacy [' + spacy_package + ']':'spacy',
                     'Tensorflow Keras Tokenizer':'tfkerastokenizer',
                     'TFIDF [Hashing Vectorizer]':'tfidf_hashing_vectorizer'}
-    optimizers = {'SGD':'sgd', 'Adam':'adam'}
+    model_optimizers = {'SGD':'sgd', 'Adam':'adam'}
         
     model_type = st.sidebar.selectbox('Model Type', ('Sequential','Non-sequential'))
     model_architecture = st.sidebar.selectbox('Model Architecture', ('MLP','CNN','LSTM'))
@@ -52,12 +52,12 @@ def user_input_features2(spacy_package):
                                                         'Spacy [' + spacy_package + ']',
                                                         'Tensorflow Keras Tokenizer',
                                                         'TFIDF [Hashing Vectorizer]'))
-    optimizer = st.sidebar.selectbox('Optimizer', ('SGD','Adam'))
+    model_optimizer = st.sidebar.selectbox('Optimizer', ('SGD','Adam'))
     
     data = {'model_type': model_types[model_type],
             'model_architecture': model_architectures[model_architecture],
             'vector_type': vector_types[vector_type],
-            'optimizer': optimizers[optimizer]}
+            'model_optimizer': model_optimizers[model_optimizer]}
     return pd.DataFrame(data, index=[0])
 
 def user_input_features3(GLOBAL_PATH, model_language, graph_data, graph_data_found, DF_LEN):
@@ -85,16 +85,18 @@ def plot_languages(df,model_language):
     with col1:
         st.write("Language instance count >=")
     with col2:
-        lang_count = st.number_input("",min_value=1,max_value=2000,value=50,label_visibility="collapsed")
+        #lang_count = st.number_input("",min_value=1,max_value=2000,value=50,label_visibility="collapsed")
+        lang_count = st.number_input("",min_value=1,max_value=2000,value=50)
 
     df_lang = df[df.lang==model_language].lang.value_counts().loc[lambda x: x>=lang_count].to_frame()
 
     fig = plt.figure(figsize =(10, 7))
     plt.style.use('ggplot')
     plt.rcParams.update({'font.size':15})
-    plt.pie(df_lang.lang, labels=df_lang.index ,autopct='%.2f%%', pctdistance=0.85)
+    st.write(df_lang)
+    plt.pie(df_lang['count'], labels=df_lang.index,autopct='%.2f%%', pctdistance=0.85)
     #https://www.pythonprogramming.in/how-to-pie-chart-with-different-color-themes-in-matplotlib.html
-    plt.legend(loc = "best", labels = ['%s = %d' % (l,c) for l,c in zip(df_lang.index, df_lang.lang)]) 
+    plt.legend(loc = "best", labels = ['%s = %d' % (l,c) for l,c in zip(df_lang.index, df_lang['count'])]) 
     # plt.show()
     # st.pyplot(fig)
 
@@ -109,6 +111,7 @@ def plot_scores(GLOBAL_PATH, model_language, graph_data, user_input_features_df,
     model_language = user_input_features_df[0].model_language[0]
     model_type = user_input_features_df[1].model_type[0]
     model_architecture = user_input_features_df[1].model_architecture[0]
+    model_optimizer = user_input_features_df[1].model_optimizer[0]
     vector_type = user_input_features_df[1].vector_type[0]
     vector_dimension = user_input_features_df[2].vector_dimension[0]
     metric = user_input_features_df[2].metric[0]
@@ -121,8 +124,8 @@ def plot_scores(GLOBAL_PATH, model_language, graph_data, user_input_features_df,
                 model_architecture.upper() + ' ' +
                 vector_type + ' ' +
                 str(vector_dimension) + 'd ' +
-                model_architecture.upper() +
-                ' SGD ' +
+                model_architecture.upper() + ' ' +
+                model_optimizer + ' ' +
                 metric + ' ' + 
                 model_language.upper()) 
     plt.ylabel(metric)
@@ -130,7 +133,7 @@ def plot_scores(GLOBAL_PATH, model_language, graph_data, user_input_features_df,
     plt.legend(['train', 'test'], loc = 'best') 
     st.pyplot(fig)
 
-@st.cache
+@st.cache_data
 def load_dataset(GLOBAL_PATH, model_language):
     return pickle.load(open(GLOBAL_PATH + model_language + '/' + CSV + model_language,'rb'))
 

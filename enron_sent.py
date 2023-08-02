@@ -16,6 +16,8 @@ import spacy
 import streamlit as st
 st.set_page_config(page_icon='favicon.png')
 import tensorflow as tf
+import time
+from datetime import datetime
 
 from collections import defaultdict
 from gensim.models.word2vec import Word2Vec
@@ -33,9 +35,7 @@ global DF_LEN
 DF_LEN = {'en':39624,'fi':39624,'sv':39624,'no':39624,'de':39624}
 
 #*************************** BEGIN ****************************************
-st.write("""
-## E-mail Sorting System
-""")
+st.write("## E-mail Sorting System")
 
 st.sidebar.header('Parameter input')
 
@@ -51,7 +51,6 @@ def user_input_features1():
 #*************************** user_input_features_df1 ****************************************
 user_input_features_df1 = user_input_features1()
 model_language = user_input_features_df1['model_language'].values[0]
-
 
 #*************************** IMPORT GLOBALS AND FUNCTIONS ****************************************
 import enron_sent_functions as f
@@ -74,8 +73,8 @@ user_input_features_df2 = f.user_input_features2(spacy_packages[model_language])
 model_type = user_input_features_df2['model_type'].values[0]
 vector_type = user_input_features_df2['vector_type'].values[0]
 model_architecture = user_input_features_df2['model_architecture'].values[0]
-optimizer = user_input_features_df2['optimizer'].values[0]
-graph_data = model_architecture + '_' + vector_type + '_' + str(30) + 'k_' + str(300) + 'd_' + optimizer + '_' + model_language
+model_optimizer = user_input_features_df2['model_optimizer'].values[0]
+graph_data = model_architecture + '_' + vector_type + '_' + str(30) + 'k_' + str(300) + 'd_' + model_optimizer + '_' + model_language
 
 
 #*************************** user_input_features_df3 ****************************************
@@ -89,7 +88,7 @@ metric = user_input_features_df3['metric'].values[0]
 vector_dimension = user_input_features_df3['vector_dimension'].values[0]
 dataset_size = user_input_features_df3['dataset_size'].values[0]
 vocabulary_size = (int)(user_input_features_df3['vocabulary_size'].values[0] / 1000)
-graph_data = model_architecture + '_' + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + optimizer + '_' + model_language
+graph_data = model_architecture + '_' + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + model_optimizer + '_' + model_language
 
 if model_type == 'nonsequential':
     st.write('model_type = ', model_type)
@@ -126,37 +125,40 @@ if graph_data_found:
 
     #*************************** Print user value counts ****************************************
     with st.expander("User value counts"):
-        st.write(df.user.value_counts().sort_index(ascending=True).to_frame().reset_index().rename(columns={'index':'assignment group','user':'count'}).sort_values(by='count',ascending=False))
+        st.write(df.user.value_counts().sort_index(ascending=True).to_frame().reset_index().rename(columns={'index':'assignment group'}).sort_index(ascending=False))
     users = df.user.unique().tolist()
 
     with st.form("my_form_text"):
-        seed_max = dataset_size - 1 if dataset_size else len(df) - 1
+        email_number_max = dataset_size - 1 if dataset_size else len(df) - 1
 
 
-        #*************************** Input email text with random seed ****************************************
-        submit_random_seed = st.form_submit_button("Generate random seed")
-        if submit_random_seed:
-            random_seed = np.random.randint(0, seed_max)
-            text_header = "Random email seed [" + str(random_seed) + "] content:"
-            text = df.iloc[random_seed].translation
+        #*************************** Input email text with random email number ****************************************
+        submit_random_email_number = st.form_submit_button("Generate random email number")
+        if submit_random_email_number:
+            dt = datetime.fromtimestamp(time.time())
+            random_email_number = np.random.randint(0, email_number_max)
+            text_header = "Random email number [" + str(random_email_number) + "] text"
+            text = df.iloc[random_email_number].translation
 
 
-        #*************************** Input email text with seed number ****************************************
-        custom_seed = st.text_input("Seed number (choose between 1 and " + str(seed_max) + ")")
-        submit_custom_seed = st.form_submit_button("Submit custom seed")
-        if submit_custom_seed:
-            if int(custom_seed) > seed_max:
-                msg = "Seed number exceeded dataset maximum"
+        #*************************** Input email text with email number ****************************************
+        custom_email_number = st.text_input("Email number (choose between 1 and " + str(email_number_max) + ")")
+        submit_custom_email_number = st.form_submit_button("Submit custom email number")
+        if submit_custom_email_number:
+            dt = datetime.fromtimestamp(time.time())
+            if int(custom_email_number) > email_number_max:
+                msg = "Email number exceeded dataset maximum"
             else:
-                text_header = "Custom email seed [" + str(custom_seed) + "] content in '" + model_language + "':"
-                text = df.iloc[int(custom_seed)].translation
+                text_header = "Custom email number [" + str(custom_email_number) + "] text in '" + model_language + "'"
+                text = df.iloc[int(custom_email_number)].translation
 
 
         #*************************** Input custom text ****************************************
         custom_text = st.text_input("Custom email content")
         submit_custom_text = st.form_submit_button("Submit text")
         if submit_custom_text:
-            text_header = "Custom email content in '" + model_language + "':"
+            dt = datetime.fromtimestamp(time.time())
+            text_header = "Custom email content in '" + model_language + "'"
             text = custom_text
 
 
@@ -165,9 +167,10 @@ if graph_data_found:
         submit_generate = st.form_submit_button("Submit length")
         if submit_generate:
         
-            from transformers import Trainer, TrainingArguments, GPT2LMHeadModel
-            model = GPT2LMHeadModel.from_pretrained("gpt2")
-            model_generate = GPT2LMHeadModel.from_pretrained(GLOBAL_PATH + model_language + "/" + f.GENERATE_DIRECTORY)
+            dt = datetime.fromtimestamp(time.time())
+            from transformers import Trainer, TrainingArguments, TFGPT2LMHeadModel
+            model = TFGPT2LMHeadModel.from_pretrained("gpt2")
+            model_generate = TFGPT2LMHeadModel.from_pretrained(GLOBAL_PATH + model_language + "/" + f.GENERATE_DIRECTORY, from_pt=True)
             from transformers import pipeline
 
             generate = pipeline('text-generation', model=model_generate, tokenizer='gpt2', config={'max_length':10000, 'temperature': .5})
@@ -177,25 +180,43 @@ if graph_data_found:
             st.write('generate length: ',generate_length)
             text = generate(initial_seed, max_length=int(generate_length)+10, min_length=int(generate_length), do_sample=True, temperature=1.2)[0]['generated_text']
             text = ' '.join(text.split()[:int(generate_length)-1])
-            text_header = "Generated content in '" + model_language + "':"
+            text_header = "Generated content in '" + model_language + "'"
             
 
+        #*************************** Input email text with x random email numbers ****************************************
+        number_of_emails = st.number_input("Number of emails", step=1)
+        submit_random_emails = st.form_submit_button("Test random email numbers")
+        random_email_numbers = []
+        text_headers = []
+        texts = []
+        if submit_random_emails:
+            dt = datetime.fromtimestamp(time.time())
+            
+            for i in range(number_of_emails):
+                random_email_number = np.random.randint(0, email_number_max)
+                text_headers.append("Random email [" + str(random_email_number) + "] text")
+                random_email_numbers.append(random_email_number)
+                texts.append(df.iloc[random_email_number].translation_clean)
+                
+
+
+    st.write("### Results")
     
     if msg != '':
         st.write('text: [', text, ']')
 
     if text != '':
-        st.write(text_header)
-        text_clean = f.cleanup_text(GLOBAL_PATH, model_language, spacy_packages, text)
-        st.write('text_clean: [', text_clean, ']')
+        with st.expander(text_header):
+            text_clean = f.cleanup_text(GLOBAL_PATH, model_language, spacy_packages, text)
+        
+        with st.expander("Cleaned email text in '" + model_language + "'"):
+            st.write(text_clean)
     
         # ************************************ Select model ************************************
-        models_ann = model_architecture + '_' + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + optimizer + '_' + model_language
+        models_ann = model_architecture + '_' + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + model_optimizer + '_' + model_language
         model = keras.models.load_model(model_language + '/' + f.MODELS_ANN_DIRECTORY + models_ann + '/',custom_objects={'get_f1':f.get_f1,'jaccard_score':f.jaccard_score})
         model_input = []
 
-        st.write('vector_type = ' + vector_type)
-        
         if vector_type == 'tfkerastokenizer':
         
             tokenizer = Tokenizer(num_words=30000, lower=True)
@@ -205,8 +226,7 @@ if graph_data_found:
             model_input = pad_sequences([model_input], maxlen=300, padding='post')
 
         elif vector_type == 'word2vec_skipgram' or vector_type == 'word2vec_cbow':
-            with open(model_language + '/' + f.MODELS_VECTORS_DIRECTORY + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + model_language, 'rb') as f:
-                vector_model = pickle.load(f)
+            vector_model = pickle.load(open(model_language + '/' + f.MODELS_VECTORS_DIRECTORY + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + model_language, 'rb'))
             text_dim = 300
             model_input = np.zeros((1,text_dim), dtype='float32')
             num_words = 0.
@@ -242,24 +262,101 @@ if graph_data_found:
             st.write('Vector type not set')
                     
         # ************************************ Predict ************************************
-        st.write('model_input = [', model_input, ']')
+        with st.expander("Model input"):
+            st.write(model_input)
         pred = model.predict(model_input)
-        st.write('predictions (%): ',model.predict(model_input)*100)
+        with st.expander("predictions (%)"):
+            st.write('predictions (%): ',model.predict(model_input)*100)
         user_number = (np.argmax(model.predict(model_input)[0]))
         st.write('MAX[',user_number,'] = ',max(model.predict(model_input)[0])*100,'%')
-        st.write('Predicted user:')
-        st.write('users[',user_number,'] = ',users[user_number],'')
+        st.write('Predicted user: users[',user_number,'] = ',users[user_number])
 
 
         # ************************************ Show and compare predictions ************************************
-        if submit_random_seed:
-            st.write('Actual user:')
-            st.write(f'df[',random_seed,'] = ',df.iloc[random_seed].user)
+        if submit_random_email_number:
+            st.write('Actual user: df[',random_email_number,'] = ',df.iloc[random_email_number].user)
 
             
-        if submit_custom_seed:
-            st.write('Actual user:')
-            st.write(f'df[',custom_seed,'] = ',df.iloc[int(custom_seed)].user)
+        if submit_custom_email_number:
+            st.write('Actual user: df[',custom_email_number,'] = ',df.iloc[int(custom_email_number)].user)
+
+        st.write('Execution time: ', str(datetime.fromtimestamp(time.time()) - dt))
+
+
+    if len(texts)>0:
+        models_ann = model_architecture + '_' + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + model_optimizer + '_' + model_language
+        model = keras.models.load_model(model_language + '/' + f.MODELS_ANN_DIRECTORY + models_ann + '/',custom_objects={'get_f1':f.get_f1,'jaccard_score':f.jaccard_score})
+        model_input = []
+        translations_clean = []
+                
+        st.write("Collecting texts...")
+        with st.expander(str(number_of_emails) + " random texts"):
+            for i in range(number_of_emails):
+                st.write(text_headers[i])
+                st.write(texts[i])
+                translations_clean.append(f.cleanup_text(GLOBAL_PATH, model_language, spacy_packages, texts[i]))
+        
+        st.write("Cleaning texts...")
+        with st.expander(str(number_of_emails) + " cleaned texts"):
+            for i in range(number_of_emails):
+                st.write(translations_clean[i])
+
+        st.write("Vectorizing texts...")
+        model_inputs = []
+        for i in range(number_of_emails):
+
+            vector_model = pickle.load(open(model_language + '/' + f.MODELS_VECTORS_DIRECTORY + vector_type + '_' + str(vocabulary_size) + 'k_' + str(vector_dimension) + 'd_' + model_language, 'rb'))
+            text_dim = 300
+            model_input = np.zeros((1,text_dim), dtype='float32')
+            num_words = 0.
+            for word in translations_clean[i].split():
+                if word in vector_model.wv.key_to_index:
+                    model_input = np.add(model_input, vector_model.wv.get_vector(word))
+                    num_words += 1.
+            if num_words != 0.:
+                model_input = np.divide(model_input, num_words)
+            model_inputs.append(model_input)
+
+
+        # ************************************ Predict ************************************
+        with st.expander(str(number_of_emails) + " model inputs"):
+            for i in range(number_of_emails):
+                st.write(model_inputs[i])
+
+        st.write("Getting predictions...")
+        user_numbers = []
+        for i in range(number_of_emails):
+            user_numbers.append(np.argmax(model.predict(model_inputs[i])[0]))
+
+        with st.expander(str(number_of_emails) + " predictions (%)"):
+            for i in range(number_of_emails):
+                st.write(model.predict(model_input)*100)
+
+        st.write("Summarize...")
+        matches = 0
+        with st.expander(str(number_of_emails) + " individual predicted users"):
+            for i in range(number_of_emails):
+
+                st.write('')
+                st.write('Actual user : df[', random_email_numbers[i], '] = ', df.iloc[random_email_numbers[i]].user)
+                
+                if users[user_numbers[i]] == df.iloc[random_email_numbers[i]].user:
+                    matches += 1
+                    color = 'green'
+                else:
+                    color = 'red'
+                st.markdown("Predicted user (max=users[" + str(user_numbers[i]) + "], " + str(max(model.predict(model_inputs[i])[0])*100) + "%) : = <span style='color: " + color + "'>" + users[user_numbers[i]] + "</span>",unsafe_allow_html=True)
+
+
+                # st.write('MAX[', user_numbers[i], '] = ', max(model.predict(model_inputs[i])[0])*100,'%')
+                # st.write('Predicted user: [', user_numbers[i], '] = ', users[user_numbers[i]])
+                # st.write('Actual user: df[', random_email_numbers[i], '] = ', df.iloc[random_email_numbers[i]].user)
+                
+                # if users[user_numbers[i]] == df.iloc[random_email_numbers[i]].user:
+                    # matches += 1
+                    
+        st.write('Match: ', str(matches), '/', str(number_of_emails), '=', str(matches/number_of_emails*100), '%')
+        st.write('Execution time: ', str(datetime.fromtimestamp(time.time()) - dt))
 
 
 else:
