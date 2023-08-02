@@ -1,4 +1,4 @@
-### https://www.emailsorter.me
+### https://emailsorter.me
 ## EMAIL SORTING SYSTEM
 
 The purpose of this system is to categorize text with multi-classification machine learning algorithms / natural language processing in Python language.
